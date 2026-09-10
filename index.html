@@ -68,7 +68,7 @@
     html[data-theme="dark"] .uid{background:#20232a;border-color:var(--line);color:var(--text)}
     html[data-theme="dark"] code{background:#292d35;color:#e4e6eb}
     html[data-theme="dark"] .preview-row{border-color:var(--line)}
-    html[data-theme="dark"] .preview-row span{color:#c3c7d0}
+    html[data-theme="dark"] .preview-row span:not(.preview-status){color:#c3c7d0}
     html[data-theme="dark"] .choice.correct{background:var(--greenbg);color:var(--green);border-color:#366b64}
     html[data-theme="dark"] .choice.wrong{background:var(--redbg);color:var(--red);border-color:#6a343d}
     button{cursor:pointer}
@@ -138,8 +138,20 @@
     .preview{border-top:1px solid var(--line);padding-top:18px;margin-top:22px}
     .preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
     .preview-list{display:grid;gap:7px;max-height:270px;overflow:auto}
-    .preview-row{display:grid;grid-template-columns:1fr 1.5fr;gap:13px;padding:10px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px}
+    .preview-row{display:grid;grid-template-columns:1fr 1.5fr auto;gap:13px;align-items:center;padding:10px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px}
     .preview-row span{color:#555}
+    .preview-status{
+      justify-self:end;
+      white-space:nowrap;
+      border-radius:999px;
+      padding:5px 9px;
+      font-size:11px;
+      font-weight:850;
+    }
+    .preview-status.new{background:var(--pinkbg);color:var(--pink)}
+    .preview-status.learning{background:var(--purplebg);color:var(--purple)}
+    .preview-status.almost{background:var(--bluebg);color:var(--blue)}
+    .preview-status.mastered{background:var(--greenbg);color:var(--green)}
 
     /* STUDY */
     .study-wrap{max-width:900px;margin:10px auto 0}
@@ -228,7 +240,8 @@
       .written-row{flex-direction:column}
       .score-row{grid-template-columns:1fr}
       .bucket-row{grid-template-columns:113px 1fr 32px}
-      .preview-row{grid-template-columns:1fr;gap:4px}
+      .preview-row{grid-template-columns:1fr;gap:5px}
+      .preview-status{justify-self:start;margin-top:3px}
     }
   </style>
 </head>
@@ -601,9 +614,31 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       E.previewList.innerHTML='<div style="font-size:13px;color:var(--muted)">Paste terms above to preview them here.</div>';
       return;
     }
+
+    // If we're editing an existing set, match each unchanged term/definition
+    // to its saved learning status so the preview shows progress.
+    const existing=editingSetId?getSet(editingSetId):null;
+    const statusMap=new Map(
+      (existing?.cards||[]).map(c=>[
+        `${c.term}\u0000${c.definition}`,
+        c.status||"new"
+      ])
+    );
+
+    const statusLabel={
+      new:"New card",
+      learning:"Still learning",
+      almost:"Almost done",
+      mastered:"Mastered"
+    };
+
     cards.slice(0,60).forEach(c=>{
+      const status=statusMap.get(`${c.term}\u0000${c.definition}`)||"new";
       const row=document.createElement("div");row.className="preview-row";
-      row.innerHTML=`<b>${escapeHTML(c.term)}</b><span>${escapeHTML(c.definition)}</span>`;
+      row.innerHTML=`
+        <b>${escapeHTML(c.term)}</b>
+        <span>${escapeHTML(c.definition)}</span>
+        <span class="preview-status ${status}">${statusLabel[status]}</span>`;
       E.previewList.appendChild(row);
     });
   }
