@@ -21,10 +21,56 @@
       --red:#b23a48; --redbg:#fde8eb;
       --shadow:0 12px 38px rgba(29,34,58,.07);
       --radius:20px;
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"]{
+      --bg:#121318;
+      --panel:#1a1c22;
+      --text:#f3f4f7;
+      --muted:#a5aab5;
+      --line:#2b2f38;
+      --accent:#8a79f2;
+      --accent2:#a994ff;
+      --pink:#f08ab9; --pinkbg:#33202a;
+      --purple:#b692f2; --purplebg:#292136;
+      --blue:#79bde7; --bluebg:#1d2b36;
+      --green:#70d2c6; --greenbg:#17302d;
+      --red:#ef8f9a; --redbg:#351f24;
+      --shadow:0 12px 38px rgba(0,0,0,.20);
+      color-scheme: dark;
     }
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     button,input,textarea,select{font:inherit}
+
+    html[data-theme="dark"] .topbar{background:rgba(26,28,34,.94)}
+    html[data-theme="dark"] .card,
+    html[data-theme="dark"] .modal{background:var(--panel);border-color:var(--line)}
+    html[data-theme="dark"] .btn,
+    html[data-theme="dark"] .iconbtn,
+    html[data-theme="dark"] input[type=text],
+    html[data-theme="dark"] input[type=number],
+    html[data-theme="dark"] textarea,
+    html[data-theme="dark"] select,
+    html[data-theme="dark"] .choice{
+      background:#20232a;color:var(--text);border-color:#343943;
+    }
+    html[data-theme="dark"] .btn:hover,
+    html[data-theme="dark"] .iconbtn:hover{background:#292d35}
+    html[data-theme="dark"] .primary{background:#f4f5f8;color:#121318;border-color:#f4f5f8}
+    html[data-theme="dark"] .primary:hover{background:#dfe2e7}
+    html[data-theme="dark"] .danger{background:#20232a;color:var(--red);border-color:#5a3138}
+    html[data-theme="dark"] .mini-progress,
+    html[data-theme="dark"] .progress-shell,
+    html[data-theme="dark"] .bucket-track{background:#292d35}
+    html[data-theme="dark"] .cloud-panel{background:#15171c;border-color:var(--line)}
+    html[data-theme="dark"] .uid{background:#20232a;border-color:var(--line);color:var(--text)}
+    html[data-theme="dark"] code{background:#292d35;color:#e4e6eb}
+    html[data-theme="dark"] .preview-row{border-color:var(--line)}
+    html[data-theme="dark"] .preview-row span{color:#c3c7d0}
+    html[data-theme="dark"] .choice.correct{background:var(--greenbg);color:var(--green);border-color:#366b64}
+    html[data-theme="dark"] .choice.wrong{background:var(--redbg);color:var(--red);border-color:#6a343d}
     button{cursor:pointer}
     .hidden{display:none!important}
 
@@ -327,6 +373,14 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       <div class="setting-copy"><b>Re-type wrong written answers</b><span>Type the correct answer once before continuing.</span></div>
       <label class="switch"><input id="retypeToggle" type="checkbox"><span class="slider"></span></label>
     </div>
+    <div class="setting">
+      <div class="setting-copy"><b>Appearance</b><span>Saved for this browser and synced when signed in.</span></div>
+      <select id="themeSelect">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">System</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -368,7 +422,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
 (() => {
   const APP_KEY="lean-learn-multiset-v2";
   const LEGACY_KEY="lean-learn-mode-v1";
-  const FIREBASE_SDK="12.18.0";
+  const FIREBASE_SDK="12.19.0";
 
   const defaults={roundLength:7,shuffle:true,smartGrading:true,direction:"definition",retypeWrong:true};
   const $=id=>document.getElementById(id);
@@ -386,7 +440,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     countNew:$("countNew"),countLearning:$("countLearning"),countAlmost:$("countAlmost"),countMastered:$("countMastered"),
     barNew:$("barNew"),barLearning:$("barLearning"),barAlmost:$("barAlmost"),barMastered:$("barMastered"),nextRoundBtn:$("nextRoundBtn"),resetProgressBtn:$("resetProgressBtn"),
     optionsModal:$("optionsModal"),closeOptionsBtn:$("closeOptionsBtn"),roundLengthInput:$("roundLengthInput"),shuffleToggle:$("shuffleToggle"),
-    smartToggle:$("smartToggle"),directionSelect:$("directionSelect"),retypeToggle:$("retypeToggle"),
+    smartToggle:$("smartToggle"),directionSelect:$("directionSelect"),retypeToggle:$("retypeToggle"),themeSelect:$("themeSelect"),
     cloudModal:$("cloudModal"),closeCloudBtn:$("closeCloudBtn"),cloudNotConfigured:$("cloudNotConfigured"),cloudConfigured:$("cloudConfigured"),
     signedOutCloud:$("signedOutCloud"),signedInCloud:$("signedInCloud"),signInBtn:$("signInBtn"),signedInAs:$("signedInAs"),uidText:$("uidText"),
     copyUidBtn:$("copyUidBtn"),syncNowBtn:$("syncNowBtn"),signOutBtn:$("signOutBtn"),toast:$("toast")
@@ -399,7 +453,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
   let view="home";
 
   // Firebase runtime
-  let fb={configured:false,user:null,app:null,auth:null,db:null,mods:null,unsub:null,syncTimers:new Map(),initializing:false};
+  let fb={configured:false,user:null,app:null,auth:null,db:null,mods:null,unsub:null,syncTimers:new Map(),prefTimer:null,initializing:false};
 
   function clone(v){return JSON.parse(JSON.stringify(v))}
   function id(){return crypto?.randomUUID?.() || Date.now().toString(36)+Math.random().toString(36).slice(2)}
@@ -408,7 +462,10 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
   function loadStore(){
     try{
       const s=JSON.parse(localStorage.getItem(APP_KEY));
-      if(s && s.sets) return s;
+      if(s && s.sets){
+        s.preferences={theme:"light",...(s.preferences||{})};
+        return s;
+      }
     }catch{}
 
     // Automatically migrate the single-set version from earlier builds.
@@ -418,6 +475,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
         const setId=id();
         const migrated={
           version:2,
+          preferences:{theme:"light"},
           sets:{
             [setId]:{
               id:setId,
@@ -434,13 +492,33 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       }
     }catch{}
 
-    return {version:2,sets:{}};
+    return {version:2,preferences:{theme:"light"},sets:{}};
   }
 
   function saveStore(){localStorage.setItem(APP_KEY,JSON.stringify(store))}
   function getSet(setId=activeSetId){return setId ? store.sets[setId] : null}
   function touchSet(set){set.updatedAtMs=now();store.sets[set.id]=set;saveStore();scheduleCloudSave(set)}
   function toast(msg){E.toast.textContent=msg;E.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>E.toast.classList.remove("show"),1700)}
+
+  function resolvedTheme(pref=store.preferences?.theme||"light"){
+    if(pref==="system"){
+      return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return pref==="dark" ? "dark" : "light";
+  }
+
+  function applyTheme(){
+    const pref=store.preferences?.theme||"light";
+    document.documentElement.dataset.theme=resolvedTheme(pref);
+  }
+
+  function setThemePreference(pref,{sync=true}={}){
+    store.preferences={...(store.preferences||{}),theme:["light","dark","system"].includes(pref)?pref:"light"};
+    saveStore();
+    applyTheme();
+    if(sync) schedulePreferencesSave();
+  }
+
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 
@@ -818,7 +896,9 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
   function openOptions(){
     const set=getSet();if(!set)return;
     E.roundLengthInput.value=set.settings.roundLength;E.shuffleToggle.checked=set.settings.shuffle;E.smartToggle.checked=set.settings.smartGrading;
-    E.directionSelect.value=set.settings.direction;E.retypeToggle.checked=set.settings.retypeWrong;E.optionsModal.classList.remove("hidden");
+    E.directionSelect.value=set.settings.direction;E.retypeToggle.checked=set.settings.retypeWrong;
+    E.themeSelect.value=store.preferences?.theme||"light";
+    E.optionsModal.classList.remove("hidden");
   }
   function closeOptions(){
     const set=getSet();
@@ -827,6 +907,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       set.settings.shuffle=E.shuffleToggle.checked;set.settings.smartGrading=E.smartToggle.checked;
       set.settings.direction=E.directionSelect.value;set.settings.retypeWrong=E.retypeToggle.checked;touchSet(set);
     }
+    setThemePreference(E.themeSelect.value);
     E.optionsModal.classList.add("hidden");
   }
 
@@ -902,9 +983,27 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     setCloudStatus("syncing","Syncing");
     try{
       const col=fb.mods.collection(fb.db,"users",fb.user.uid,"sets");
-      const snap=await fb.mods.getDocs(col);
+      const prefRef=fb.mods.doc(fb.db,"users",fb.user.uid,"preferences","app");
+      const [snap,prefSnap]=await Promise.all([
+        fb.mods.getDocs(col),
+        fb.mods.getDoc(prefRef)
+      ]);
       const cloud=new Map();
       snap.forEach(d=>cloud.set(d.id,d.data()));
+
+      if(prefSnap.exists()){
+        const p=prefSnap.data();
+        const cloudUpdated=Number(p.updatedAtMs||0);
+        const localUpdated=Number(store.preferences?.updatedAtMs||0);
+        if(cloudUpdated>localUpdated){
+          store.preferences={
+            theme:["light","dark","system"].includes(p.theme)?p.theme:"light",
+            updatedAtMs:cloudUpdated
+          };
+          saveStore();
+          applyTheme();
+        }
+      }
 
       // Last-updated copy wins for each set.
       for(const [sid,cset] of cloud){
@@ -921,6 +1020,12 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
         const c=cloud.get(set.id);
         if(!c||(set.updatedAtMs||0)>(c.updatedAtMs||0))uploads.push(writeCloudSet(set));
       }
+      const cloudPrefUpdated=prefSnap.exists()?Number(prefSnap.data().updatedAtMs||0):0;
+      const localPrefUpdated=Number(store.preferences?.updatedAtMs||0);
+      if(!prefSnap.exists() || localPrefUpdated>cloudPrefUpdated){
+        uploads.push(writePreferences());
+      }
+
       await Promise.all(uploads);
       if(view==="home")renderHome();
       setCloudStatus("synced","Synced");
@@ -967,10 +1072,36 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     fb.syncTimers.set(set.id,t);
   }
 
+  async function writePreferences(){
+    if(!fb.user||!fb.db)return;
+    const p={
+      theme:store.preferences?.theme||"light",
+      updatedAtMs:Number(store.preferences?.updatedAtMs||now())
+    };
+    await fb.mods.setDoc(
+      fb.mods.doc(fb.db,"users",fb.user.uid,"preferences","app"),
+      p
+    );
+  }
+
+  function schedulePreferencesSave(){
+    store.preferences={...(store.preferences||{}),updatedAtMs:now()};
+    saveStore();
+    if(!fb.user||!fb.db)return;
+    clearTimeout(fb.prefTimer);
+    setCloudStatus("syncing","Syncing");
+    fb.prefTimer=setTimeout(async()=>{
+      try{await writePreferences();setCloudStatus("synced","Synced")}
+      catch(e){console.error(e);setCloudStatus("error","Sync error")}
+    },450);
+  }
+
   function subscribeCloud(){
     if(!fb.user||!fb.db)return;
     const col=fb.mods.collection(fb.db,"users",fb.user.uid,"sets");
-    fb.unsub=fb.mods.onSnapshot(col,snap=>{
+    const prefRef=fb.mods.doc(fb.db,"users",fb.user.uid,"preferences","app");
+
+    const unsubSets=fb.mods.onSnapshot(col,snap=>{
       let changed=false;
       snap.docChanges().forEach(ch=>{
         const sid=ch.doc.id;
@@ -987,6 +1118,23 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       if(changed){saveStore();if(view==="home")renderHome()}
       setCloudStatus("synced","Synced");
     },e=>{console.error(e);setCloudStatus("error","Sync error")});
+
+    const unsubPrefs=fb.mods.onSnapshot(prefRef,snap=>{
+      if(!snap.exists())return;
+      const p=snap.data();
+      const cloudUpdated=Number(p.updatedAtMs||0);
+      const localUpdated=Number(store.preferences?.updatedAtMs||0);
+      if(cloudUpdated>localUpdated){
+        store.preferences={
+          theme:["light","dark","system"].includes(p.theme)?p.theme:"light",
+          updatedAtMs:cloudUpdated
+        };
+        saveStore();
+        applyTheme();
+      }
+    },e=>console.error(e));
+
+    fb.unsub=()=>{unsubSets();unsubPrefs()};
   }
 
   // ---------- EVENTS ----------
@@ -996,6 +1144,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
   E.saveStudyBtn.onclick=()=>{const s=saveEditor();if(s)openStudy(s.id)};
   E.homeBtn.onclick=renderHome;E.editBtn.onclick=()=>openEditor(activeSetId);E.optionsBtn.onclick=openOptions;
   E.closeOptionsBtn.onclick=closeOptions;E.optionsModal.onclick=e=>{if(e.target===E.optionsModal)closeOptions()};
+  E.themeSelect.onchange=()=>setThemePreference(E.themeSelect.value);
   E.answerBtn.onclick=gradeWritten;E.writtenInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();gradeWritten()}};
   E.continueBtn.onclick=nextQuestion;E.nextRoundBtn.onclick=()=>{showOnly("study");startRound()};E.resetProgressBtn.onclick=resetProgress;
 
@@ -1032,6 +1181,10 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
   });
 
   // Start
+  applyTheme();
+  window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{
+    if((store.preferences?.theme||"light")==="system")applyTheme();
+  });
   renderHome();
   renderPreview();
   initFirebase();
