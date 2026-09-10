@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Learn Mode</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --panel:#fff;
+      --text:#17181c;
+      --muted:#6e7380;
+      --line:#e5e8ef;
+      --accent:#6d5ce7;
+      --accent2:#8b7af3;
+      --pink:#d84c8b; --pinkbg:#fde7f0;
+      --purple:#7c49d5; --purplebg:#eee4fb;
+      --blue:#297fb6; --bluebg:#e4f2fc;
+      --green:#168e82; --greenbg:#ddf5f1;
+      --red:#b23a48; --redbg:#fde8eb;
+      --shadow:0 12px 38px rgba(29,34,58,.07);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+
+    .topbar{
+      height:64px;position:sticky;top:0;z-index:20;
+      background:rgba(255,255,255,.94);backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+      display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+      padding:0 22px;
+    }
+    .brand{font-weight:850}
+    .top-title{font-weight:850;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .top-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+    .cloud-dot{width:8px;height:8px;border-radius:50%;background:#a9adb6;display:inline-block;margin-right:6px}
+    .cloud-dot.synced{background:#36a996}
+    .cloud-dot.syncing{background:#7d6ce7}
+    .cloud-dot.error{background:#c44b59}
+    .cloud-label{font-size:12px;color:var(--muted);font-weight:750;white-space:nowrap}
+
+    .btn,.primary,.danger,.iconbtn{
+      min-height:40px;border:1px solid var(--line);border-radius:11px;
+      background:#fff;color:var(--text);padding:0 14px;font-weight:750
+    }
+    .btn:hover,.iconbtn:hover{background:#f3f4f7}
+    .primary{background:#111;color:#fff;border-color:#111}
+    .primary:hover{background:#292929}
+    .danger{color:var(--red);border-color:#efc9cf}
+    .danger:hover{background:var(--redbg)}
+    .small{min-height:34px;font-size:13px;padding:0 11px}
+    .iconbtn{width:40px;padding:0;font-size:19px}
+
+    main{max-width:1080px;margin:0 auto;padding:34px 18px 64px}
+    .card{background:var(--panel);border:1px solid #eff0f4;border-radius:var(--radius);box-shadow:var(--shadow)}
+
+    /* HOME */
+    .home-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:22px}
+    .home-head h1{margin:0 0 6px;font-size:34px;line-height:1.05}
+    .home-head p{margin:0;color:var(--muted)}
+    .sets-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .set-card{padding:20px;display:flex;flex-direction:column;min-height:190px}
+    .set-title{font-size:20px;font-weight:850;margin-bottom:6px;overflow-wrap:anywhere}
+    .set-meta{font-size:13px;color:var(--muted);font-weight:650}
+    .mini-progress{height:7px;background:#eceef3;border-radius:999px;overflow:hidden;margin:18px 0 8px}
+    .mini-progress>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}
+    .set-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:17px}
+    .empty-state{padding:50px 24px;text-align:center}
+    .empty-state h2{margin:0 0 8px}
+    .empty-state p{color:var(--muted);margin:0 0 20px}
+
+    /* EDITOR */
+    .editor{padding:28px}
+    .editor h1{margin:0 0 8px;font-size:30px}
+    .editor-sub{color:var(--muted);margin:0 0 24px;line-height:1.5}
+    .field{margin-bottom:17px}
+    .field label{display:block;font-size:13px;font-weight:850;margin:0 0 8px}
+    input[type=text],input[type=number],textarea,select{
+      width:100%;border:1.5px solid #dfe2ea;border-radius:13px;background:#fff;color:var(--text);
+      padding:13px 14px;outline:none
+    }
+    textarea{min-height:275px;resize:vertical;line-height:1.5}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(109,92,231,.10)}
+    .format-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:9px}
+    code{background:#f0f1f6;border-radius:6px;padding:2px 6px}
+    .editor-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .preview{border-top:1px solid var(--line);padding-top:18px;margin-top:22px}
+    .preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .preview-list{display:grid;gap:7px;max-height:270px;overflow:auto}
+    .preview-row{display:grid;grid-template-columns:1fr 1.5fr;gap:13px;padding:10px 11px;border:1px solid var(--line);border-radius:11px;font-size:13px}
+    .preview-row span{color:#555}
+
+    /* STUDY */
+    .study-wrap{max-width:900px;margin:10px auto 0}
+    .study-meta{display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px}
+    .status-chip{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:850}
+    .status-chip:before{content:"";width:10px;height:10px;border:3px solid currentColor;border-radius:50%;opacity:.75}
+    .s-new{background:var(--pinkbg);color:var(--pink)}
+    .s-learning{background:var(--purplebg);color:var(--purple)}
+    .s-almost{background:var(--bluebg);color:var(--blue)}
+    .s-mastered{background:var(--greenbg);color:var(--green)}
+    .round-counter{font-size:13px;color:var(--muted);font-weight:800}
+    .progress-shell{height:8px;background:#e7e9ef;border-radius:999px;overflow:hidden;margin-bottom:15px}
+    .progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s}
+    .question-card{padding:30px;min-height:465px;display:flex;flex-direction:column}
+    .question-label{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--muted);font-weight:900}
+    .prompt{font-size:23px;line-height:1.45;font-weight:700;margin:24px 0 30px;white-space:pre-wrap}
+    .mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto}
+    .choice{text-align:left;border:1.5px solid #dfe2ea;background:#fff;border-radius:14px;padding:17px;min-height:64px;font-weight:720}
+    .choice:hover{border-color:#bdb6ed}
+    .choice.correct{border-color:#7bd4c8;background:var(--greenbg);color:#0c746a}
+    .choice.wrong{border-color:#ea9ba7;background:var(--redbg);color:#942e3b}
+    .choice.dim{opacity:.45}
+    .written{margin-top:auto}
+    .written-row{display:flex;gap:10px}
+    .written-row input{font-size:17px}
+    .feedback{margin-top:14px;padding:13px 14px;border-radius:11px;font-size:14px;line-height:1.4;font-weight:700}
+    .feedback.good{background:var(--greenbg);color:#0b756a}
+    .feedback.bad{background:var(--redbg);color:#8e2f3b}
+    .feedback-actions{display:flex;gap:8px;margin-top:9px}
+    .continue-row{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:15px}
+    .continue-hint{font-size:12px;color:var(--muted);font-weight:700}
+
+    /* SUMMARY */
+    .summary{padding:30px}
+    .summary h2{font-size:28px;margin:0 0 6px}
+    .summary-sub{margin:0 0 25px;color:var(--muted)}
+    .score-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .score-box{border:1px solid var(--line);border-radius:15px;padding:17px}
+    .score-box strong{display:block;font-size:27px}
+    .score-box span{font-size:12px;color:var(--muted);font-weight:750}
+    .bucket-list{display:grid;gap:13px}
+    .bucket-row{display:grid;grid-template-columns:138px 1fr 38px;gap:12px;align-items:center}
+    .bucket-name{font-size:13px;font-weight:850}
+    .bucket-track{height:23px;background:#eef0f4;border-radius:999px;overflow:hidden}
+    .bucket-fill{height:100%;border-radius:999px}
+    .b-new{background:#f3acd0}.b-learning{background:#c7a8f0}.b-almost{background:#98cbed}.b-mastered{background:#85d8cf}
+    .bucket-count{text-align:right;font-weight:850}
+    .summary-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:27px}
+
+    /* MODAL */
+    .backdrop{position:fixed;inset:0;background:rgba(20,23,32,.42);z-index:50;display:grid;place-items:center;padding:18px}
+    .modal{width:min(620px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:19px;padding:24px;box-shadow:0 25px 80px rgba(20,25,50,.25)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .modal-head h2{margin:0;font-size:22px}
+    .setting{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:15px 0;border-top:1px solid var(--line)}
+    .setting:first-of-type{border-top:0}
+    .setting-copy b{display:block;font-size:14px}
+    .setting-copy span{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.4}
+    .setting input[type=number],.setting select{width:155px;padding:9px 10px}
+    .switch{position:relative;width:48px;height:28px;flex:0 0 auto}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;inset:0;background:#adb1ba;border-radius:999px}
+    .slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.17s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .switch input:checked+.slider{background:#17181c}
+    .switch input:checked+.slider:before{transform:translateX(20px)}
+    .cloud-panel{background:#f6f7fb;border:1px solid var(--line);border-radius:14px;padding:15px;margin-top:13px}
+    .cloud-panel p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+    .uid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-wrap:anywhere;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px}
+
+    .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,18px);background:#17181c;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:750;opacity:0;pointer-events:none;transition:.2s;z-index:100}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+
+    @media(max-width:720px){
+      .topbar{grid-template-columns:auto 1fr auto;padding:0 12px;height:60px}
+      .brand{display:none}
+      .top-title{justify-self:start;max-width:45vw}
+      .cloud-label{display:none}
+      main{padding:22px 12px 48px}
+      .home-head{align-items:flex-start;flex-direction:column}
+      .home-head h1{font-size:30px}
+      .sets-grid{grid-template-columns:1fr}
+      .editor{padding:21px}
+      .question-card{padding:20px;min-height:440px}
+      .prompt{font-size:19px}
+      .mc-grid{grid-template-columns:1fr}
+      .written-row{flex-direction:column}
+      .score-row{grid-template-columns:1fr}
+      .bucket-row{grid-template-columns:113px 1fr 32px}
+      .preview-row{grid-template-columns:1fr;gap:4px}
+    }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Learn Mode</div>
+  <div id="topTitle" class="top-title">My Sets</div>
+  <div class="top-actions">
+    <div id="cloudStatus" title="Cloud sync status">
+      <span id="cloudDot" class="cloud-dot"></span><span id="cloudLabel" class="cloud-label">Local</span>
+    </div>
+    <button id="homeBtn" class="btn small hidden">Home</button>
+    <button id="editBtn" class="btn small hidden">Edit</button>
+    <button id="optionsBtn" class="btn small hidden">Options</button>
+    <button id="accountBtn" class="btn small">Cloud</button>
+  </div>
+</header>
+
+<main>
+  <section id="homeView">
+    <div class="home-head">
+      <div>
+        <h1>Your Sets</h1>
+        <p>Pick up where you left off.</p>
+      </div>
+      <button id="newSetBtn" class="primary">+ New Set</button>
+    </div>
+    <div id="setsGrid" class="sets-grid"></div>
+    <div id="emptyState" class="card empty-state hidden">
+      <h2>No sets yet</h2>
+      <p>Create a set and paste in your vocab.</p>
+      <button id="emptyNewBtn" class="primary">Create a set</button>
+    </div>
+  </section>
+
+  <section id="editorView" class="card editor hidden">
+    <h1 id="editorHeading">New Set</h1>
+    <p class="editor-sub">Paste one term and definition per line.</p>
+
+    <div class="field">
+      <label for="setTitle">Set title</label>
+      <input id="setTitle" type="text" placeholder="e.g. APUSH Unit 5" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="importBox">Terms and definitions</label>
+      <textarea id="importBox" spellcheck="false" placeholder="Compromise of 1850	Admitted California as a free state...
+Popular sovereignty	The idea that settlers should decide..."></textarea>
+      <div class="format-note">Use <code>term[TAB]definition</code>, one card per line. <code>term :: definition</code> also works.</div>
+    </div>
+
+    <div class="editor-actions">
+      <button id="cancelEditBtn" class="btn">Cancel</button>
+      <div style="display:flex;gap:8px">
+        <button id="saveSetBtn" class="btn">Save</button>
+        <button id="saveStudyBtn" class="primary">Save & Study</button>
+      </div>
+    </div>
+
+    <div class="preview">
+      <div class="preview-head">
+        <b>Preview</b>
+        <span id="previewCount" style="font-size:12px;color:var(--muted)">0 cards</span>
+      </div>
+      <div id="previewList" class="preview-list"></div>
+    </div>
+  </section>
+
+  <section id="studyView" class="study-wrap hidden">
+    <div class="study-meta">
+      <span id="statusChip" class="status-chip s-new">New card</span>
+      <span id="roundCounter" class="round-counter">1 / 7</span>
+    </div>
+    <div class="progress-shell"><div id="progressBar" class="progress-bar"></div></div>
+
+    <div class="card question-card">
+      <div id="questionLabel" class="question-label">Definition</div>
+      <div id="prompt" class="prompt"></div>
+      <div id="mcArea" class="mc-grid"></div>
+
+      <div id="writtenArea" class="written hidden">
+        <div class="written-row">
+          <input id="writtenInput" type="text" placeholder="Type the term…" autocomplete="off">
+          <button id="answerBtn" class="primary">Answer</button>
+        </div>
+      </div>
+
+      <div id="feedback" class="feedback hidden"></div>
+      <div id="feedbackActions" class="feedback-actions hidden"></div>
+      <div id="continueRow" class="continue-row hidden">
+        <span class="continue-hint">Press any key to continue</span>
+        <button id="continueBtn" class="primary">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="summaryView" class="card summary hidden">
+    <h2 id="summaryTitle">Round complete</h2>
+    <p id="summarySub" class="summary-sub"></p>
+    <div class="score-row">
+      <div class="score-box"><strong id="roundCorrect">0/0</strong><span>Correct this round</span></div>
+      <div class="score-box"><strong id="accuracy">0%</strong><span>Round accuracy</span></div>
+      <div class="score-box"><strong id="masteryPercent">0%</strong><span>Overall mastered</span></div>
+    </div>
+    <div class="bucket-list">
+      <div class="bucket-row"><div class="bucket-name" style="color:var(--pink)">New cards</div><div class="bucket-track"><div id="barNew" class="bucket-fill b-new"></div></div><div id="countNew" class="bucket-count">0</div></div>
+      <div class="bucket-row"><div class="bucket-name" style="color:var(--purple)">Still learning</div><div class="bucket-track"><div id="barLearning" class="bucket-fill b-learning"></div></div><div id="countLearning" class="bucket-count">0</div></div>
+      <div class="bucket-row"><div class="bucket-name" style="color:var(--blue)">Almost done</div><div class="bucket-track"><div id="barAlmost" class="bucket-fill b-almost"></div></div><div id="countAlmost" class="bucket-count">0</div></div>
+      <div class="bucket-row"><div class="bucket-name" style="color:var(--green)">Mastered</div><div class="bucket-track"><div id="barMastered" class="bucket-fill b-mastered"></div></div><div id="countMastered" class="bucket-count">0</div></div>
+    </div>
+    <div class="summary-actions">
+      <button id="resetProgressBtn" class="danger">Reset progress</button>
+      <button id="nextRoundBtn" class="primary">Next round</button>
+    </div>
+  </section>
+</main>
+
+<!-- Learn options -->
+<div id="optionsModal" class="backdrop hidden">
+  <div class="modal">
+    <div class="modal-head"><h2>Learn options</h2><button id="closeOptionsBtn" class="iconbtn">×</button></div>
+    <div class="setting">
+      <div class="setting-copy"><b>Round length</b><span>Unique cards selected before retries.</span></div>
+      <input id="roundLengthInput" type="number" min="1" max="50">
+    </div>
+    <div class="setting">
+      <div class="setting-copy"><b>Shuffle terms</b><span>Randomize cards inside each priority group.</span></div>
+      <label class="switch"><input id="shuffleToggle" type="checkbox"><span class="slider"></span></label>
+    </div>
+    <div class="setting">
+      <div class="setting-copy"><b>Smart grading</b><span>Ignore case/punctuation and allow a tiny typo.</span></div>
+      <label class="switch"><input id="smartToggle" type="checkbox"><span class="slider"></span></label>
+    </div>
+    <div class="setting">
+      <div class="setting-copy"><b>Prompt with</b><span>Choose which side you see first.</span></div>
+      <select id="directionSelect">
+        <option value="definition">Definition → Term</option>
+        <option value="term">Term → Definition</option>
+      </select>
+    </div>
+    <div class="setting">
+      <div class="setting-copy"><b>Re-type wrong written answers</b><span>Type the correct answer once before continuing.</span></div>
+      <label class="switch"><input id="retypeToggle" type="checkbox"><span class="slider"></span></label>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud -->
+<div id="cloudModal" class="backdrop hidden">
+  <div class="modal">
+    <div class="modal-head"><h2>Cloud sync</h2><button id="closeCloudBtn" class="iconbtn">×</button></div>
+    <div id="cloudNotConfigured">
+      <p style="color:var(--muted);line-height:1.55">Firebase is not configured yet. The app still works normally and saves all sets in this browser.</p>
+      <div class="cloud-panel">
+        <p>After you create a Firebase web app, paste its config into <b>firebase-config.js</b> and set <b>enabled: true</b>.</p>
+      </div>
+    </div>
+    <div id="cloudConfigured" class="hidden">
+      <div id="signedOutCloud">
+        <p style="color:var(--muted);line-height:1.55">Sign in with Google to sync your sets and progress across devices.</p>
+        <button id="signInBtn" class="primary">Sign in with Google</button>
+      </div>
+      <div id="signedInCloud" class="hidden">
+        <p id="signedInAs" style="color:var(--muted);line-height:1.55"></p>
+        <div class="cloud-panel">
+          <p>Your Firebase UID:</p>
+          <div id="uidText" class="uid"></div>
+          <button id="copyUidBtn" class="btn small" style="margin-top:9px">Copy UID</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button id="syncNowBtn" class="primary">Sync now</button>
+          <button id="signOutBtn" class="btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="./firebase-config.js"></script>
+<script>
+(() => {
+  const APP_KEY="lean-learn-multiset-v2";
+  const LEGACY_KEY="lean-learn-mode-v1";
+  const FIREBASE_SDK="12.18.0";
+
+  const defaults={roundLength:7,shuffle:true,smartGrading:true,direction:"definition",retypeWrong:true};
+  const $=id=>document.getElementById(id);
+  const E={
+    homeView:$("homeView"),editorView:$("editorView"),studyView:$("studyView"),summaryView:$("summaryView"),
+    setsGrid:$("setsGrid"),emptyState:$("emptyState"),newSetBtn:$("newSetBtn"),emptyNewBtn:$("emptyNewBtn"),
+    editorHeading:$("editorHeading"),setTitle:$("setTitle"),importBox:$("importBox"),previewCount:$("previewCount"),previewList:$("previewList"),
+    cancelEditBtn:$("cancelEditBtn"),saveSetBtn:$("saveSetBtn"),saveStudyBtn:$("saveStudyBtn"),
+    topTitle:$("topTitle"),homeBtn:$("homeBtn"),editBtn:$("editBtn"),optionsBtn:$("optionsBtn"),accountBtn:$("accountBtn"),
+    cloudStatus:$("cloudStatus"),cloudDot:$("cloudDot"),cloudLabel:$("cloudLabel"),
+    statusChip:$("statusChip"),roundCounter:$("roundCounter"),progressBar:$("progressBar"),questionLabel:$("questionLabel"),prompt:$("prompt"),
+    mcArea:$("mcArea"),writtenArea:$("writtenArea"),writtenInput:$("writtenInput"),answerBtn:$("answerBtn"),
+    feedback:$("feedback"),feedbackActions:$("feedbackActions"),continueRow:$("continueRow"),continueBtn:$("continueBtn"),
+    summaryTitle:$("summaryTitle"),summarySub:$("summarySub"),roundCorrect:$("roundCorrect"),accuracy:$("accuracy"),masteryPercent:$("masteryPercent"),
+    countNew:$("countNew"),countLearning:$("countLearning"),countAlmost:$("countAlmost"),countMastered:$("countMastered"),
+    barNew:$("barNew"),barLearning:$("barLearning"),barAlmost:$("barAlmost"),barMastered:$("barMastered"),nextRoundBtn:$("nextRoundBtn"),resetProgressBtn:$("resetProgressBtn"),
+    optionsModal:$("optionsModal"),closeOptionsBtn:$("closeOptionsBtn"),roundLengthInput:$("roundLengthInput"),shuffleToggle:$("shuffleToggle"),
+    smartToggle:$("smartToggle"),directionSelect:$("directionSelect"),retypeToggle:$("retypeToggle"),
+    cloudModal:$("cloudModal"),closeCloudBtn:$("closeCloudBtn"),cloudNotConfigured:$("cloudNotConfigured"),cloudConfigured:$("cloudConfigured"),
+    signedOutCloud:$("signedOutCloud"),signedInCloud:$("signedInCloud"),signInBtn:$("signInBtn"),signedInAs:$("signedInAs"),uidText:$("uidText"),
+    copyUidBtn:$("copyUidBtn"),syncNowBtn:$("syncNowBtn"),signOutBtn:$("signOutBtn"),toast:$("toast")
+  };
+
+  let store=loadStore();
+  let activeSetId=null;
+  let editingSetId=null;
+  let round=null,current=null,locked=false,awaitingRetype=false;
+  let view="home";
+
+  // Firebase runtime
+  let fb={configured:false,user:null,app:null,auth:null,db:null,mods:null,unsub:null,syncTimers:new Map(),initializing:false};
+
+  function clone(v){return JSON.parse(JSON.stringify(v))}
+  function id(){return crypto?.randomUUID?.() || Date.now().toString(36)+Math.random().toString(36).slice(2)}
+  function now(){return Date.now()}
+
+  function loadStore(){
+    try{
+      const s=JSON.parse(localStorage.getItem(APP_KEY));
+      if(s && s.sets) return s;
+    }catch{}
+
+    // Automatically migrate the single-set version from earlier builds.
+    try{
+      const legacy=JSON.parse(localStorage.getItem(LEGACY_KEY));
+      if(legacy?.cards?.length){
+        const setId=id();
+        const migrated={
+          version:2,
+          sets:{
+            [setId]:{
+              id:setId,
+              title:legacy.title || "Imported Set",
+              cards:legacy.cards.map(c=>({...c,id:c.id||id()})),
+              settings:{...defaults,...(legacy.settings||{})},
+              createdAtMs:now(),
+              updatedAtMs:now()
+            }
+          }
+        };
+        localStorage.setItem(APP_KEY,JSON.stringify(migrated));
+        return migrated;
+      }
+    }catch{}
+
+    return {version:2,sets:{}};
+  }
+
+  function saveStore(){localStorage.setItem(APP_KEY,JSON.stringify(store))}
+  function getSet(setId=activeSetId){return setId ? store.sets[setId] : null}
+  function touchSet(set){set.updatedAtMs=now();store.sets[set.id]=set;saveStore();scheduleCloudSave(set)}
+  function toast(msg){E.toast.textContent=msg;E.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>E.toast.classList.remove("show"),1700)}
+  function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+  function setCloudStatus(mode,label){
+    E.cloudDot.className="cloud-dot"+(mode ? " "+mode : "");
+    E.cloudLabel.textContent=label;
+  }
+
+  function showOnly(which){
+    view=which;
+    for(const [name,el] of [["home",E.homeView],["editor",E.editorView],["study",E.studyView],["summary",E.summaryView]]){
+      el.classList.toggle("hidden",name!==which);
+    }
+    const inSet=which==="study"||which==="summary";
+    E.homeBtn.classList.toggle("hidden",!inSet);
+    E.editBtn.classList.toggle("hidden",!inSet);
+    E.optionsBtn.classList.toggle("hidden",!inSet);
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function renderHome(){
+    activeSetId=null;
+    E.topTitle.textContent="My Sets";
+    showOnly("home");
+    E.setsGrid.innerHTML="";
+    const sets=Object.values(store.sets).sort((a,b)=>(b.updatedAtMs||0)-(a.updatedAtMs||0));
+    E.emptyState.classList.toggle("hidden",sets.length>0);
+    E.setsGrid.classList.toggle("hidden",sets.length===0);
+
+    sets.forEach(set=>{
+      const total=set.cards.length;
+      const mastered=set.cards.filter(c=>c.status==="mastered").length;
+      const pct=total?Math.round(mastered/total*100):0;
+
+      const card=document.createElement("div");
+      card.className="card set-card";
+      card.innerHTML=`
+        <div class="set-title">${escapeHTML(set.title)}</div>
+        <div class="set-meta">${total} card${total===1?"":"s"} · ${pct}% mastered</div>
+        <div class="mini-progress"><div style="width:${pct}%"></div></div>
+        <div class="set-meta">${mastered}/${total} mastered</div>
+        <div class="set-actions">
+          <button class="primary small" data-act="study">Study</button>
+          <button class="btn small" data-act="edit">Edit</button>
+          <button class="btn small" data-act="dup">Duplicate</button>
+          <button class="danger small" data-act="delete">Delete</button>
+        </div>`;
+      card.querySelector('[data-act="study"]').onclick=()=>openStudy(set.id);
+      card.querySelector('[data-act="edit"]').onclick=()=>openEditor(set.id);
+      card.querySelector('[data-act="dup"]').onclick=()=>duplicateSet(set.id);
+      card.querySelector('[data-act="delete"]').onclick=()=>deleteSet(set.id);
+      E.setsGrid.appendChild(card);
+    });
+  }
+
+  function parseCards(text){
+    const rows=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean),cards=[];
+    for(const row of rows){
+      let term="",definition="";
+      if(row.includes("\t")){
+        const p=row.split("\t");term=p.shift().trim();definition=p.join("\t").trim();
+      }else if(row.includes("::")){
+        const i=row.indexOf("::");term=row.slice(0,i).trim();definition=row.slice(i+2).trim();
+      }else{
+        const m=row.match(/^(.+?)\s+-\s+(.+)$/);
+        if(m){term=m[1].trim();definition=m[2].trim()}
+      }
+      if(term&&definition)cards.push({term,definition});
+    }
+    return cards;
+  }
+
+  function serializeCards(cards){return cards.map(c=>`${c.term}\t${c.definition}`).join("\n")}
+
+  function renderPreview(){
+    const cards=parseCards(E.importBox.value);
+    E.previewCount.textContent=`${cards.length} card${cards.length===1?"":"s"}`;
+    E.previewList.innerHTML="";
+    if(!cards.length){
+      E.previewList.innerHTML='<div style="font-size:13px;color:var(--muted)">Paste terms above to preview them here.</div>';
+      return;
+    }
+    cards.slice(0,60).forEach(c=>{
+      const row=document.createElement("div");row.className="preview-row";
+      row.innerHTML=`<b>${escapeHTML(c.term)}</b><span>${escapeHTML(c.definition)}</span>`;
+      E.previewList.appendChild(row);
+    });
+  }
+
+  function openEditor(setId=null){
+    editingSetId=setId;
+    const set=setId?getSet(setId):null;
+    E.editorHeading.textContent=set?"Edit Set":"New Set";
+    E.setTitle.value=set?.title||"";
+    E.importBox.value=set?serializeCards(set.cards):"";
+    E.topTitle.textContent=set?.title||"New Set";
+    renderPreview();
+    showOnly("editor");
+    E.setTitle.focus();
+  }
+
+  function saveEditor(){
+    const parsed=parseCards(E.importBox.value);
+    if(parsed.length<2){toast("Add at least 2 valid cards.");return null}
+    const existing=editingSetId?getSet(editingSetId):null;
+    const oldMap=new Map((existing?.cards||[]).map(c=>[`${c.term}\u0000${c.definition}`,c]));
+    const setId=existing?.id||id();
+    const set={
+      id:setId,
+      title:E.setTitle.value.trim()||"Untitled Set",
+      cards:parsed.map(c=>{
+        const old=oldMap.get(`${c.term}\u0000${c.definition}`);
+        return {id:old?.id||id(),term:c.term,definition:c.definition,status:old?.status||"new"};
+      }),
+      settings:{...defaults,...(existing?.settings||{})},
+      createdAtMs:existing?.createdAtMs||now(),
+      updatedAtMs:now()
+    };
+    store.sets[setId]=set;
+    saveStore();
+    scheduleCloudSave(set);
+    editingSetId=setId;
+    return set;
+  }
+
+  function duplicateSet(setId){
+    const old=getSet(setId);if(!old)return;
+    const newId=id(), copy=clone(old);
+    copy.id=newId;
+    copy.title=`${old.title} Copy`;
+    copy.createdAtMs=copy.updatedAtMs=now();
+    copy.cards=copy.cards.map(c=>({...c,id:id()}));
+    store.sets[newId]=copy;saveStore();scheduleCloudSave(copy);renderHome();toast("Duplicated.");
+  }
+
+  async function deleteSet(setId){
+    const set=getSet(setId);if(!set)return;
+    if(!confirm(`Delete "${set.title}"?`))return;
+    delete store.sets[setId];saveStore();renderHome();
+    if(fb.user&&fb.db){
+      try{
+        setCloudStatus("syncing","Syncing");
+        await fb.mods.deleteDoc(fb.mods.doc(fb.db,"users",fb.user.uid,"sets",setId));
+        setCloudStatus("synced","Synced");
+      }catch(e){console.error(e);setCloudStatus("error","Sync error");toast("Deleted locally; cloud delete failed.")}
+    }
+  }
+
+  // ---------- LEARN MODE ----------
+  function openStudy(setId){
+    activeSetId=setId;
+    const set=getSet();if(!set)return renderHome();
+    E.topTitle.textContent=set.title;
+    showOnly("study");
+    startRound();
+  }
+
+  function startRound(){
+    const set=getSet();if(!set)return renderHome();
+    const active=set.cards.filter(c=>c.status!=="mastered");
+    const reviewMode=active.length===0&&set.cards.length>0;
+    let ordered;
+
+    if(reviewMode){
+      ordered=[...set.cards];
+      shuffle(ordered); // Mastered review is always random.
+    }else{
+      const groups=[
+        active.filter(c=>c.status==="new"),
+        active.filter(c=>c.status==="learning"),
+        active.filter(c=>c.status==="almost")
+      ];
+      if(set.settings.shuffle)groups.forEach(shuffle);
+      ordered=groups.flat();
+    }
+
+    const target=Math.min(set.settings.roundLength,ordered.length);
+    round={attempts:0,target,completed:0,correct:0,wrong:0,reviewMode,queue:ordered.slice(0,target).map(c=>c.id)};
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    awaitingRetype=false;locked=false;clearQuestionUI();
+    const set=getSet();if(!set)return renderHome();
+
+    if(!round.queue.length){
+      showSummary();return;
+    }
+
+    const nextId=round.queue.shift();
+    current=set.cards.find(c=>c.id===nextId);
+    if(!current){nextQuestion();return}
+    const mode=(round.reviewMode||current.status==="almost")?"written":"mc";
+    renderQuestion(current,mode);
+  }
+
+  function clearQuestionUI(){
+    E.mcArea.innerHTML="";
+    E.writtenInput.value="";
+    E.writtenInput.disabled=false;
+    E.answerBtn.disabled=false;
+    E.writtenInput.placeholder=getSet()?.settings.direction==="definition"?"Type the term…":"Type the definition…";
+    E.feedback.textContent="";E.feedback.className="feedback hidden";
+    E.feedbackActions.innerHTML="";E.feedbackActions.classList.add("hidden");
+    E.continueRow.classList.add("hidden");E.writtenArea.classList.add("hidden");
+  }
+
+  function promptSide(card){return getSet().settings.direction==="definition"?card.definition:card.term}
+  function answerSide(card){return getSet().settings.direction==="definition"?card.term:card.definition}
+  function sideLabel(){return getSet().settings.direction==="definition"?"Definition":"Term"}
+
+  function renderQuestion(card,mode){
+    const name={new:"New card",learning:"Still learning",almost:"Almost done",mastered:"Mastered"};
+    const cls={new:"s-new",learning:"s-learning",almost:"s-almost",mastered:"s-mastered"};
+    E.statusChip.className=`status-chip ${cls[card.status]}`;
+    E.statusChip.textContent=name[card.status];
+    E.roundCounter.textContent=`${Math.min(round.completed+1,round.target)} / ${round.target}`;
+    E.progressBar.style.width=`${round.target?(round.completed/round.target)*100:0}%`;
+    E.questionLabel.textContent=sideLabel();
+    E.prompt.textContent=promptSide(card);
+    mode==="mc"?renderMC(card):renderWritten(card);
+  }
+
+  function renderMC(card){
+    const set=getSet(),correct=answerSide(card);
+    const others=set.cards.filter(c=>c.id!==card.id).map(answerSide).filter((v,i,a)=>v!==correct&&a.indexOf(v)===i);
+    shuffle(others);
+    const opts=[correct,...others.slice(0,3)];shuffle(opts);
+    opts.forEach((ans,i)=>{
+      const b=document.createElement("button");b.className="choice";b.dataset.answer=ans;
+      b.innerHTML=`<span style="color:#8a8f9d;margin-right:9px">${i+1}</span>${escapeHTML(ans)}`;
+      b.onclick=()=>gradeMC(ans,b);E.mcArea.appendChild(b);
+    });
+  }
+
+  function renderWritten(){
+    E.writtenInput.disabled=false;E.answerBtn.disabled=false;E.writtenArea.classList.remove("hidden");
+    requestAnimationFrame(()=>E.writtenInput.focus());
+  }
+
+  function gradeMC(ans,button){
+    if(locked)return;locked=true;
+    const correct=answerSide(current),ok=ans===correct;
+    [...E.mcArea.children].forEach(b=>{
+      if(b.dataset.answer===correct)b.classList.add("correct");
+      else if(b===button)b.classList.add("wrong");
+      else b.classList.add("dim");
+      b.disabled=true;
+    });
+    finishAttempt(ok,"mc");
+  }
+
+  function normalize(s){
+    return String(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
+  }
+  function lev(a,b){
+    const n=b.length,d=Array.from({length:n+1},(_,i)=>i);
+    for(let i=1;i<=a.length;i++){let prev=d[0];d[0]=i;for(let j=1;j<=n;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=t}}
+    return d[n];
+  }
+  function writtenCorrect(user,correct){
+    const set=getSet();
+    if(!set.settings.smartGrading)return user.trim()===correct.trim();
+    const a=normalize(user),b=normalize(correct);if(a===b)return true;if(!a||!b)return false;
+    const m=Math.max(a.length,b.length),allow=m<=6?0:m<=18?1:2;
+    return lev(a,b)<=allow;
+  }
+
+  function gradeWritten(){
+    const set=getSet();if(!set)return;
+    if(locked&&!awaitingRetype)return;
+    const user=E.writtenInput.value.trim();if(!user){toast("Type an answer first.");return}
+    const correct=answerSide(current);
+
+    if(awaitingRetype){
+      if(normalize(user)===normalize(correct)){
+        awaitingRetype=false;locked=true;
+        E.writtenInput.disabled=true;E.answerBtn.disabled=true;E.writtenInput.blur();
+        E.feedback.className="feedback good";E.feedback.textContent="Correct.";
+        E.continueRow.classList.remove("hidden");
+      }else{
+        E.feedback.className="feedback bad";
+        E.feedback.innerHTML=`Type: <b>${escapeHTML(correct)}</b>`;
+        E.writtenInput.select();
+      }
+      return;
+    }
+
+    locked=true;E.writtenInput.disabled=true;E.answerBtn.disabled=true;E.writtenInput.blur();
+    finishAttempt(writtenCorrect(user,correct),"written");
+  }
+
+  function finishAttempt(ok,mode){
+    const set=getSet();if(!set)return;
+    round.attempts++;if(ok)round.correct++;else round.wrong++;
+    const oldStatus=current.status;
+
+    if(ok){
+      round.completed++;
+      if(!round.reviewMode){
+        if(oldStatus==="new"||oldStatus==="learning")current.status="almost";
+        else if(oldStatus==="almost")current.status="mastered";
+      }
+    }else{
+      if(!round.reviewMode)current.status="learning";
+      if(!round.queue.includes(current.id))round.queue.push(current.id);
+    }
+    touchSet(set);
+
+    if(ok){
+      E.feedback.className="feedback good";E.feedback.textContent="Correct.";
+      E.continueRow.classList.remove("hidden");
+    }else{
+      E.feedback.className="feedback bad";
+      E.feedback.innerHTML=`Not quite. Correct answer: <b>${escapeHTML(answerSide(current))}</b>`;
+      E.feedbackActions.classList.remove("hidden");
+      const over=document.createElement("button");over.className="btn small";over.textContent="I was right";
+      over.onclick=()=>overrideWrong(oldStatus);E.feedbackActions.appendChild(over);
+
+      if(mode==="written"&&set.settings.retypeWrong){
+        awaitingRetype=true;locked=false;E.writtenInput.disabled=false;E.answerBtn.disabled=false;
+        E.writtenInput.value="";E.writtenInput.placeholder="Re-type the correct answer…";E.writtenInput.focus();
+      }else E.continueRow.classList.remove("hidden");
+    }
+    E.progressBar.style.width=`${round.target?(round.completed/round.target)*100:0}%`;
+  }
+
+  function overrideWrong(oldStatus){
+    const set=getSet();if(!set)return;
+    round.wrong=Math.max(0,round.wrong-1);round.correct++;round.completed++;
+    round.queue=round.queue.filter(x=>x!==current.id);
+    if(!round.reviewMode)current.status=oldStatus==="almost"?"mastered":"almost";
+    touchSet(set);
+    awaitingRetype=false;locked=true;E.writtenInput.disabled=true;E.answerBtn.disabled=true;E.writtenInput.blur();
+    E.feedback.className="feedback good";E.feedback.textContent="Correct.";
+    E.feedbackActions.classList.add("hidden");E.continueRow.classList.remove("hidden");
+    E.progressBar.style.width=`${(round.completed/round.target)*100}%`;
+  }
+
+  function showSummary(){
+    const set=getSet();if(!set)return renderHome();
+    showOnly("summary");
+    const total=set.cards.length;
+    const counts={
+      new:set.cards.filter(c=>c.status==="new").length,
+      learning:set.cards.filter(c=>c.status==="learning").length,
+      almost:set.cards.filter(c=>c.status==="almost").length,
+      mastered:set.cards.filter(c=>c.status==="mastered").length
+    };
+    const allDone=counts.mastered===total&&total>0;
+    if(round.reviewMode){
+      E.summaryTitle.textContent="Review complete";
+      E.summarySub.textContent=`All ${total} cards are mastered.`;
+    }else{
+      E.summaryTitle.textContent=allDone?"Set mastered":"Round complete";
+      E.summarySub.textContent=allDone?`You mastered all ${total} cards.`:"";
+    }
+    E.roundCorrect.textContent=`${round.correct}/${round.attempts}`;
+    E.accuracy.textContent=round.attempts?`${Math.round(round.correct/round.attempts*100)}%`:"—";
+    E.masteryPercent.textContent=total?`${Math.round(counts.mastered/total*100)}%`:"0%";
+    E.countNew.textContent=counts.new;E.countLearning.textContent=counts.learning;E.countAlmost.textContent=counts.almost;E.countMastered.textContent=counts.mastered;
+    const pct=n=>total?`${n/total*100}%`:"0%";
+    E.barNew.style.width=pct(counts.new);E.barLearning.style.width=pct(counts.learning);E.barAlmost.style.width=pct(counts.almost);E.barMastered.style.width=pct(counts.mastered);
+    E.nextRoundBtn.textContent=allDone?"Review again":"Next round";
+  }
+
+  function resetProgress(){
+    const set=getSet();if(!set)return;
+    if(!confirm("Reset every card in this set back to New?"))return;
+    set.cards.forEach(c=>c.status="new");touchSet(set);showSummary();toast("Progress reset.");
+  }
+
+  // ---------- OPTIONS ----------
+  function openOptions(){
+    const set=getSet();if(!set)return;
+    E.roundLengthInput.value=set.settings.roundLength;E.shuffleToggle.checked=set.settings.shuffle;E.smartToggle.checked=set.settings.smartGrading;
+    E.directionSelect.value=set.settings.direction;E.retypeToggle.checked=set.settings.retypeWrong;E.optionsModal.classList.remove("hidden");
+  }
+  function closeOptions(){
+    const set=getSet();
+    if(set){
+      set.settings.roundLength=Math.max(1,Math.min(50,parseInt(E.roundLengthInput.value)||7));
+      set.settings.shuffle=E.shuffleToggle.checked;set.settings.smartGrading=E.smartToggle.checked;
+      set.settings.direction=E.directionSelect.value;set.settings.retypeWrong=E.retypeToggle.checked;touchSet(set);
+    }
+    E.optionsModal.classList.add("hidden");
+  }
+
+  // ---------- FIREBASE ----------
+  function configLooksReady(){
+    const x=window.LEARN_FIREBASE;
+    return !!(x?.enabled&&x?.config?.apiKey&&!String(x.config.apiKey).includes("PASTE_"));
+  }
+
+  async function initFirebase(){
+    if(!configLooksReady()){
+      setCloudStatus("","Local");
+      E.cloudNotConfigured.classList.remove("hidden");E.cloudConfigured.classList.add("hidden");
+      return;
+    }
+    if(fb.initializing||fb.configured)return;
+    fb.initializing=true;
+    try{
+      const [appM,authM,fsM]=await Promise.all([
+        import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-app.js`),
+        import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-auth.js`),
+        import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK}/firebase-firestore.js`)
+      ]);
+      fb.mods={...authM,...fsM};
+      fb.app=appM.initializeApp(window.LEARN_FIREBASE.config);
+      fb.auth=authM.getAuth(fb.app);fb.db=fsM.getFirestore(fb.app);fb.configured=true;
+      E.cloudNotConfigured.classList.add("hidden");E.cloudConfigured.classList.remove("hidden");
+      setCloudStatus("","Signed out");
+
+      authM.onAuthStateChanged(fb.auth,async user=>{
+        fb.user=user||null;renderCloudAccount();
+        if(fb.unsub){fb.unsub();fb.unsub=null}
+        if(user){
+          const owner=window.LEARN_FIREBASE.ownerUid?.trim();
+          if(owner&&owner!==user.uid){
+            toast("This Google account is not the configured owner.");
+            await authM.signOut(fb.auth);return;
+          }
+          await syncAll();
+          subscribeCloud();
+        }else setCloudStatus("","Signed out");
+      });
+      window.addEventListener("online",()=>{if(fb.user)syncAll()});
+    }catch(e){
+      console.error(e);setCloudStatus("error","Cloud error");toast("Firebase could not load.");
+    }finally{fb.initializing=false}
+  }
+
+  function renderCloudAccount(){
+    if(!fb.configured)return;
+    const signed=!!fb.user;
+    E.signedOutCloud.classList.toggle("hidden",signed);E.signedInCloud.classList.toggle("hidden",!signed);
+    if(signed){
+      E.signedInAs.textContent=`Signed in as ${fb.user.email||fb.user.displayName||"Google user"}`;
+      E.uidText.textContent=fb.user.uid;setCloudStatus("synced","Synced");
+    }
+  }
+
+  async function signIn(){
+    if(!fb.configured){toast("Configure Firebase first.");return}
+    try{
+      const p=new fb.mods.GoogleAuthProvider();
+      await fb.mods.signInWithPopup(fb.auth,p);
+    }catch(e){
+      console.error(e);
+      if(e?.code==="auth/unauthorized-domain")toast("Add this GitHub Pages domain to Firebase Authorized domains.");
+      else toast("Google sign-in failed.");
+    }
+  }
+
+  async function syncAll(){
+    if(!fb.user||!fb.db)return;
+    setCloudStatus("syncing","Syncing");
+    try{
+      const col=fb.mods.collection(fb.db,"users",fb.user.uid,"sets");
+      const snap=await fb.mods.getDocs(col);
+      const cloud=new Map();
+      snap.forEach(d=>cloud.set(d.id,d.data()));
+
+      // Last-updated copy wins for each set.
+      for(const [sid,cset] of cloud){
+        const local=store.sets[sid];
+        if(!local||(cset.updatedAtMs||0)>(local.updatedAtMs||0)){
+          store.sets[sid]=sanitizeCloudSet(cset,sid);
+        }
+      }
+      saveStore();
+
+      // Upload local-only or newer local copies.
+      const uploads=[];
+      for(const set of Object.values(store.sets)){
+        const c=cloud.get(set.id);
+        if(!c||(set.updatedAtMs||0)>(c.updatedAtMs||0))uploads.push(writeCloudSet(set));
+      }
+      await Promise.all(uploads);
+      if(view==="home")renderHome();
+      setCloudStatus("synced","Synced");
+    }catch(e){
+      console.error(e);setCloudStatus("error","Sync error");
+      if(e?.code==="permission-denied")toast("Firestore rules blocked sync.");
+      else toast("Cloud sync failed; local copy is safe.");
+    }
+  }
+
+  function sanitizeCloudSet(x,sid){
+    return {
+      id:sid,title:String(x.title||"Untitled Set"),
+      cards:Array.isArray(x.cards)?x.cards.map(c=>({
+        id:String(c.id||id()),term:String(c.term||""),definition:String(c.definition||""),
+        status:["new","learning","almost","mastered"].includes(c.status)?c.status:"new"
+      })):[],
+      settings:{...defaults,...(x.settings||{})},
+      createdAtMs:Number(x.createdAtMs||now()),updatedAtMs:Number(x.updatedAtMs||now())
+    };
+  }
+
+  function cloudPayload(set){
+    return {
+      id:set.id,title:set.title,cards:set.cards,settings:set.settings,
+      createdAtMs:set.createdAtMs||now(),updatedAtMs:set.updatedAtMs||now()
+    };
+  }
+
+  async function writeCloudSet(set){
+    if(!fb.user||!fb.db)return;
+    await fb.mods.setDoc(fb.mods.doc(fb.db,"users",fb.user.uid,"sets",set.id),cloudPayload(set));
+  }
+
+  function scheduleCloudSave(set){
+    if(!fb.user||!fb.db)return;
+    clearTimeout(fb.syncTimers.get(set.id));
+    setCloudStatus("syncing","Syncing");
+    const t=setTimeout(async()=>{
+      try{await writeCloudSet(set);setCloudStatus("synced","Synced")}
+      catch(e){console.error(e);setCloudStatus("error","Sync error")}
+      fb.syncTimers.delete(set.id);
+    },650);
+    fb.syncTimers.set(set.id,t);
+  }
+
+  function subscribeCloud(){
+    if(!fb.user||!fb.db)return;
+    const col=fb.mods.collection(fb.db,"users",fb.user.uid,"sets");
+    fb.unsub=fb.mods.onSnapshot(col,snap=>{
+      let changed=false;
+      snap.docChanges().forEach(ch=>{
+        const sid=ch.doc.id;
+        if(ch.type==="removed"){
+          // Deletion from another signed-in device.
+          if(store.sets[sid]){delete store.sets[sid];changed=true}
+          return;
+        }
+        const c=sanitizeCloudSet(ch.doc.data(),sid),local=store.sets[sid];
+        if(!local||(c.updatedAtMs||0)>(local.updatedAtMs||0)){
+          store.sets[sid]=c;changed=true;
+        }
+      });
+      if(changed){saveStore();if(view==="home")renderHome()}
+      setCloudStatus("synced","Synced");
+    },e=>{console.error(e);setCloudStatus("error","Sync error")});
+  }
+
+  // ---------- EVENTS ----------
+  E.newSetBtn.onclick=()=>openEditor();E.emptyNewBtn.onclick=()=>openEditor();
+  E.cancelEditBtn.onclick=renderHome;E.importBox.oninput=renderPreview;
+  E.saveSetBtn.onclick=()=>{if(saveEditor()){toast("Saved.");renderHome()}};
+  E.saveStudyBtn.onclick=()=>{const s=saveEditor();if(s)openStudy(s.id)};
+  E.homeBtn.onclick=renderHome;E.editBtn.onclick=()=>openEditor(activeSetId);E.optionsBtn.onclick=openOptions;
+  E.closeOptionsBtn.onclick=closeOptions;E.optionsModal.onclick=e=>{if(e.target===E.optionsModal)closeOptions()};
+  E.answerBtn.onclick=gradeWritten;E.writtenInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();gradeWritten()}};
+  E.continueBtn.onclick=nextQuestion;E.nextRoundBtn.onclick=()=>{showOnly("study");startRound()};E.resetProgressBtn.onclick=resetProgress;
+
+  E.accountBtn.onclick=()=>{E.cloudModal.classList.remove("hidden");initFirebase()};
+  E.closeCloudBtn.onclick=()=>E.cloudModal.classList.add("hidden");
+  E.cloudModal.onclick=e=>{if(e.target===E.cloudModal)E.cloudModal.classList.add("hidden")};
+  E.signInBtn.onclick=signIn;
+  E.signOutBtn.onclick=()=>fb.mods.signOut(fb.auth);
+  E.syncNowBtn.onclick=syncAll;
+  E.copyUidBtn.onclick=async()=>{try{await navigator.clipboard.writeText(fb.user.uid);toast("UID copied.")}catch{toast("Copy failed.")}};
+
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"){
+      if(!E.optionsModal.classList.contains("hidden")){closeOptions();return}
+      if(!E.cloudModal.classList.contains("hidden")){E.cloudModal.classList.add("hidden");return}
+    }
+
+    if(view!=="study")return;
+
+    // 1-4 answer multiple choice.
+    if(!locked && current && !round?.reviewMode && current.status!=="almost"){
+      const n=parseInt(e.key,10);
+      if(n>=1&&n<=E.mcArea.children.length){e.preventDefault();E.mcArea.children[n-1].click();return}
+    }
+
+    // Any ordinary key continues after a finished response.
+    if(!E.continueRow.classList.contains("hidden") && E.optionsModal.classList.contains("hidden") && E.cloudModal.classList.contains("hidden")){
+      const el=document.activeElement;
+      const tag=(el?.tagName||"").toLowerCase();
+      const activelyTyping=(tag==="input"||tag==="textarea"||tag==="select") && !el.disabled;
+      const modifier=["Shift","Control","Alt","Meta","CapsLock","Tab"].includes(e.key);
+      if(!activelyTyping&&!modifier){e.preventDefault();nextQuestion()}
+    }
+  });
+
+  // Start
+  renderHome();
+  renderPreview();
+  initFirebase();
+})();
+</script>
+</body>
+</html>
