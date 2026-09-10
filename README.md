@@ -115,19 +115,6 @@ After that:
 - another signed-in device receives newer Firestore changes;
 - deleting a set while online deletes it from Firestore too.
 
-## Optional: make the database usable by literally only your account
-
-The normal `firestore.rules` already prevents anyone from reading anyone else's data.
-
-If you want to prevent other people from using their own separate account on your public site too:
-
-1. Sign in once.
-2. Open **Cloud** and copy the Firebase UID shown there.
-3. Open `firestore-owner-only.rules`.
-4. Replace `PASTE_YOUR_FIREBASE_UID`.
-5. Paste those rules into Firestore and publish.
-6. Put the same UID in `ownerUid` inside `firebase-config.js`.
-
 ## Important
 
 The Firebase web configuration is designed to be present in client-side web code. Do not put service-account credentials, private keys, GitHub tokens, or other secrets into this repository.
