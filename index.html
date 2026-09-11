@@ -731,7 +731,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     }
 
     const target=Math.min(set.settings.roundLength,ordered.length);
-    round={attempts:0,target,completed:0,correct:0,wrong:0,reviewMode,queue:ordered.slice(0,target).map(c=>c.id)};
+    round={attempts:0,target,completed:0,correct:0,wrong:0,reviewMode,queue:ordered.slice(0,target).map(c=>c.id),pendingLearning:new Set()};
     nextQuestion();
   }
 
@@ -851,15 +851,28 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     const set=getSet();if(!set)return;
     round.attempts++;if(ok)round.correct++;else round.wrong++;
     const oldStatus=current.status;
+    // True when this card was already missed earlier in the same round.
+    // This lets "I was right" correct only the current retry without erasing
+    // the original miss that scheduled an end-of-round demotion.
+    const wasPendingLearning=round.pendingLearning?.has(current.id)||false;
 
     if(ok){
       round.completed++;
       if(!round.reviewMode){
         if(oldStatus==="new"||oldStatus==="learning")current.status="almost";
-        else if(oldStatus==="almost")current.status="mastered";
+        else if(oldStatus==="almost"&&!round.pendingLearning.has(current.id))current.status="mastered";
+        // If an Almost Done card was missed earlier this round, a correct retry
+        // completes the round item but does not erase that miss. It stays Almost
+        // Done until the round ends, then is moved to Still Learning.
       }
     }else{
-      if(!round.reviewMode)current.status="learning";
+      if(oldStatus==="almost" || oldStatus==="mastered"){
+        // Almost Done and Mastered misses keep their current status for the
+        // retry, then move to Still Learning only after the round ends.
+        round.pendingLearning.add(current.id);
+      }else if(!round.reviewMode){
+        current.status="learning";
+      }
       if(!round.queue.includes(current.id))round.queue.push(current.id);
     }
     touchSet(set);
@@ -872,7 +885,7 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
       E.feedback.innerHTML=`Not quite. Correct answer: <b>${escapeHTML(answerSide(current))}</b>`;
       E.feedbackActions.classList.remove("hidden");
       const over=document.createElement("button");over.className="btn small";over.textContent="I was right";
-      over.onclick=()=>overrideWrong(oldStatus);E.feedbackActions.appendChild(over);
+      over.onclick=()=>overrideWrong(oldStatus,wasPendingLearning);E.feedbackActions.appendChild(over);
 
       if(mode==="written"&&set.settings.retypeWrong){
         awaitingRetype=true;locked=false;E.writtenInput.disabled=false;E.answerBtn.disabled=false;
@@ -882,11 +895,20 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     E.progressBar.style.width=`${round.target?(round.completed/round.target)*100:0}%`;
   }
 
-  function overrideWrong(oldStatus){
+  function overrideWrong(oldStatus,wasPendingLearning=false){
     const set=getSet();if(!set)return;
     round.wrong=Math.max(0,round.wrong-1);round.correct++;round.completed++;
     round.queue=round.queue.filter(x=>x!==current.id);
-    if(!round.reviewMode)current.status=oldStatus==="almost"?"mastered":"almost";
+
+    if(!wasPendingLearning){
+      // "I was right" on the FIRST attempt means the miss never happened,
+      // so cancel any delayed demotion and apply the normal correct promotion.
+      if(oldStatus==="almost" || oldStatus==="mastered")round.pendingLearning.delete(current.id);
+      if(!round.reviewMode)current.status=oldStatus==="almost"?"mastered":"almost";
+    }
+    // On a retry, "I was right" only fixes that retry. The earlier real miss
+    // remains in pendingLearning, so the card still becomes Still Learning
+    // when the round ends.
     touchSet(set);
     awaitingRetype=false;locked=true;E.writtenInput.disabled=true;E.answerBtn.disabled=true;E.writtenInput.blur();
     E.feedback.className="feedback good";E.feedback.textContent="Correct.";
@@ -896,6 +918,19 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
 
   function showSummary(){
     const set=getSet();if(!set)return renderHome();
+
+    // Apply delayed demotions only after the round is fully over.
+    // Almost Done and Mastered misses keep their original status for retries,
+    // but the miss still counts by moving them to Still Learning afterward.
+    const delayedDemotions=round.pendingLearning?.size||0;
+    if(delayedDemotions){
+      let changed=false;
+      set.cards.forEach(c=>{
+        if(round.pendingLearning.has(c.id)){c.status="learning";changed=true}
+      });
+      if(changed)touchSet(set);
+    }
+
     showOnly("summary");
     const total=set.cards.length;
     const counts={
@@ -907,7 +942,9 @@ Popular sovereignty	The idea that settlers should decide..."></textarea>
     const allDone=counts.mastered===total&&total>0;
     if(round.reviewMode){
       E.summaryTitle.textContent="Review complete";
-      E.summarySub.textContent=`All ${total} cards are mastered.`;
+      E.summarySub.textContent=delayedDemotions
+        ? `${delayedDemotions} missed card${delayedDemotions===1?"":"s"} moved to Still Learning.`
+        : `All ${total} cards are mastered.`;
     }else{
       E.summaryTitle.textContent=allDone?"Set mastered":"Round complete";
       E.summarySub.textContent=allDone?`You mastered all ${total} cards.`:"";
